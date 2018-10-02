@@ -10,10 +10,6 @@ addpath(genpath('../plotFSurf2'))
 
 %% load some data
 
-% FREESURFER_DIR = getenv('FREESURFER_HOME') ;
-% lh_sphere = [ FREESURFER_DIR '/subjects/fsaverage/surf/lh.sphere' ] ;
-% rh_sphere = [ FREESURFER_DIR '/subjects/fsaverage/surf/rh.sphere' ] ;
-
 lh_sphere = [ pwd '/data/external/fsaverage/surf/lh.sphere' ] ;
 rh_sphere = [ pwd '/data/external/fsaverage/surf/rh.sphere' ] ;
 lh_inflated = [ pwd '/data/external/fsaverage/surf/lh.inflated' ] ;
@@ -54,20 +50,26 @@ annotData.RH.vals = set_roi_vals(annotData.RH.labs,annotData.roi_ids,1:annotData
 
 %% get the i mask
 
+blackVal = 1 ;
+
 % get where midline 'black hole' is
-iMask_LH = (annotData.LH.labs == 0) ; 
+iMask_LH = (annotData.LH.vals == blackVal) ; 
+
+cmap = annotData.LH.ct.table(:,1:3) ./ 255 ;
 
 %% viz before
 
 figure
 h = viz_views(surfSphereData,annotData.LH.vals,[],'lh:med') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 
 figure
 h = viz_views(surfSphereData,annotData.LH.vals,[],'lh:lat') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 
 %% rotate
 
@@ -77,16 +79,18 @@ colormap(annotData.LH.ct.table(:,1:3) ./ 255)
 figure
 h = viz_views(surfSphereData,rotParc,[],'lh:med') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 figure
 h = viz_views(surfSphereData,rotParc,[],'lh:lat') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 
 %% figure out which labs are in black, and need to be repositioned
 
 % function [ labelsToReSeed ] = eval_medial_space(origMask,rotVals,spaceVal)
-labsToReSeed = eval_medial_space(iMask_LH,rotParc,1) ;
+fillVals = eval_medial_space(iMask_LH,rotParc,1) ;
 
 %% fill the hole
 
@@ -99,7 +103,7 @@ newBlackHoleInd = newBlackHoleInd .* ~iMask_LH ;
 newBlackHoleCoors = surfSphereData.LH.coords(~~newBlackHoleInd,:) ;
 
 % function [ filledVals ] = kfill_space(fillVals,toFillCoords,initPrcnt) 
-fVals = kfill_space(reseedAreas,newBlackHoleCoors) ;
+fVals = kfill_space(fillVals,newBlackHoleCoors) ;
 
 newParc = rotParc .* 1 ;
 % now put the new labs into the parc
@@ -111,12 +115,14 @@ newParc = newParc .* ~iMask_LH ;
 figure
 h = viz_views(surfSphereData,newParc,[],'lh:lat') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 
 figure
 h = viz_views(surfSphereData,newParc,[],'lh:med') ;
 % add the colormap
-colormap(annotData.LH.ct.table(:,1:3) ./ 255)
+colormap(cmap)
+lighting none
 
 
 
