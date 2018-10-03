@@ -7,13 +7,16 @@ The spherical rotation is adapted from Salim Arslan's [parcel evaluation](https:
 
 ### What does this code do?
 
-Heres a look at the Destrieux atlas projected to a sphere, in the un-rotated space:
+Heres a look at the [Destrieux](https://surfer.nmr.mgh.harvard.edu/fswiki/CorticalParcellation) atlas projected to a sphere, in the un-rotated space:
+
 ![fig1](./data/before_rotation.png)
 
 This sphere is then rotated randomly in the x, y, and z direction:
+
 ![fig2](./data/brainRot_1.png)
 
-And finally we put the original 'black hole' back and fill the rotated 'black hole' with labels that were rotated into the original 'black hole':
+And finally we put the original 'black hole' back and fill the rotated 'black hole' with labels rotated too far into the original invalid space:
+
 ![fig3](./data/brainRot_2.png)
 
 ### About filling the rotated back hole
