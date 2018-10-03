@@ -2,144 +2,85 @@
 clc
 clearvars
 
-%% setup paths
+%% setup path
 
 addpath(genpath(pwd))
-addpath([ getenv('FREESURFER_HOME') 'matlab'])
-addpath(genpath('../plotFSurf2'))
 
 %% load some data
 
+% example just for left hemi
 lh_sphere = [ pwd '/data/external/fsaverage/surf/lh.sphere' ] ;
-rh_sphere = [ pwd '/data/external/fsaverage/surf/rh.sphere' ] ;
+% rh_sphere = [ pwd '/data/external/fsaverage/surf/rh.sphere' ] ;
 lh_inflated = [ pwd '/data/external/fsaverage/surf/lh.inflated' ] ;
-rh_inflated = [ pwd '/data/external/fsaverage/surf/rh.inflated' ] ;
-
-% setup struct
-surfSphereData = struct();
-surfInflateData = struct();
-
-% func to read data into struct, will get surfData.LH and surfDace.RH
-surfSphereData = read_surfStruct(lh_sphere,'LH',surfSphereData) ;
-surfSphereData = read_surfStruct(rh_sphere,'RH',surfSphereData) ;
-
-% func to read data into struct, will get surfData.LH and surfDace.RH
-surfInflateData = read_surfStruct(lh_inflated,'LH',surfInflateData) ;
-surfInflateData = read_surfStruct(rh_inflated,'RH',surfInflateData) ;
-
-%% read in annot
-% setup struct
-annotData = struct();
-
+% rh_inflated = [ pwd '/data/external/fsaverage/surf/rh.inflated' ] ;
 lh_annot = [ pwd '/data/external/fsaverage/label/lh.aparc.a2009s.annot' ] ;
-rh_annot = [ pwd '/data/external/fsaverage/label/rh.aparc.a2009s.annot' ] ;
+% rh_annot = [ pwd '/data/external/fsaverage/label/rh.aparc.a2009s.annot' ] ;
 
-% func to read data into struct
-annotData = read_annotStruct(lh_annot,'LH',annotData) ;
-annotData = read_annotStruct(rh_annot,'RH',annotData) ;
+%% read in data
 
-% get the total number of rois, which we just need to read as the height of
-% either of the annot color tables
-annotData.nrois = size(annotData.LH.ct.table,1) ;
+[~,lh_annotLabs,annotTable] = read_annotation(lh_annot) ;
+[lh_sphere_verts,lh_sphere_faces] = read_surf(lh_sphere);
 
-% the unique ids for each
-annotData.roi_ids = annotData.LH.ct.table(:,5) ;
+% make index start at 1
+lh_sphere_faces = lh_sphere_faces + 1;
 
-annotData.LH.vals = set_roi_vals(annotData.LH.labs,annotData.roi_ids,1:annotData.nrois) ;
-annotData.RH.vals = set_roi_vals(annotData.RH.labs,annotData.roi_ids,1:annotData.nrois) ;
+% label at each vertex
+labels = ones(length(lh_annotLabs),1);
+for idx = 1:size(annotTable.table,1)
+    labels(lh_annotLabs == annotTable.table(idx,5)) = idx;
+end
 
-%% get the i mask
+cmap = annotTable.table(:,1:3) ./ 255 ;
 
-blackVal = 1 ;
+%% get the 'black hole', created by subcortical and callosal structures
 
-% get where midline 'black hole' is
-iMask_LH = (annotData.LH.vals == blackVal) ; 
+% this is the value it will be in 'labels' var
+blackHoleVal = 1 ;
 
-cmap = annotData.LH.ct.table(:,1:3) ./ 255 ;
+% get the 'black hole' area
+blackHoleMask = (labels == blackHoleVal) ; 
 
 %% viz before
 
 figure
-h = viz_views(surfSphereData,annotData.LH.vals,[],'lh:med') ;
-% add the colormap
-colormap(cmap)
-lighting none
-
-figure
-h = viz_views(surfSphereData,annotData.LH.vals,[],'lh:lat') ;
-% add the colormap
-colormap(cmap)
-lighting none
+quick_plot_surf(lh_sphere_faces,lh_sphere_verts,labels,cmap)
 
 %% rotate
 
 % function [ rotatedParc , rotatedMask] = rotate_sphere_parc( iParcels, iSphere , iMask, ithetas)
-[ rotParc , rotMask ] = rotate_sphere_parc(annotData.LH.vals,surfSphereData.LH,iMask_LH) ;
+rotParc = rotate_sphere_parc(labels,lh_sphere_verts,blackHoleMask) ;
 
+% and viz
 figure
-h = viz_views(surfSphereData,rotParc,[],'lh:med') ;
-% add the colormap
-colormap(cmap)
-lighting none
-figure
-h = viz_views(surfSphereData,rotParc,[],'lh:lat') ;
-% add the colormap
-colormap(cmap)
-lighting none
+quick_plot_surf(lh_sphere_faces,lh_sphere_verts,rotParc,cmap)
 
 %% figure out which labs are in black, and need to be repositioned
 
 % function [ labelsToReSeed ] = eval_medial_space(origMask,rotVals,spaceVal)
-fillVals = eval_medial_space(iMask_LH,rotParc,1) ;
+fillVals = eval_medial_space(blackHoleMask,rotParc,1) ;
 
-%% fill the hole
+%% make new annot with rotated black hole filled
 
-% now get the new black hole
-newBlackHoleInd = rotParc == blackVal ;
+newBlackHoleInd = rotParc == blackHoleVal ;
 % get only new blackHole outside of old black hole
 %  by multipling by old backHole converse
-newBlackHoleInd = newBlackHoleInd .* ~iMask_LH ;
+newBlackHoleInd = newBlackHoleInd .* ~blackHoleMask ;
 
-newBlackHoleCoors = surfSphereData.LH.coords(~~newBlackHoleInd,:) ;
+newBlackHoleCoors = lh_sphere_verts(logical(newBlackHoleInd),:) ;
 
 % function [ filledVals ] = kfill_space(fillVals,toFillCoords,initPrcnt) 
-fVals = kfill_space(fillVals,newBlackHoleCoors) ;
+fVals4BlackHole = kfill_space(fillVals,newBlackHoleCoors) ;
 
+% write into newParc var
 newParc = rotParc .* 1 ;
 % now put the new labs into the parc
-newParc(~~newBlackHoleInd) = fVals ;
-newParc = newParc .* ~iMask_LH ;
+newParc(logical(newBlackHoleInd)) = fVals4BlackHole ;
+newParc = newParc .* ~blackHoleMask ;
 
-%%
-
-figure
-h = viz_views(surfSphereData,newParc,[],'lh:lat') ;
-% add the colormap
-colormap(cmap)
-lighting none
+%% viz new rotated parc
 
 figure
-h = viz_views(surfSphereData,newParc,[],'lh:med') ;
-% add the colormap
-colormap(cmap)
-lighting none
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+quick_plot_surf(lh_sphere_faces,lh_sphere_verts,newParc,cmap)
 
 
 

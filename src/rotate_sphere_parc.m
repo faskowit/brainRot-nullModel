@@ -39,7 +39,14 @@ else
 end
 
 if ~isfield(iSphere,'coords')
-   error('need sphere with field "coords" for this func to work') 
+   if size(iSphere,2) == 3
+       disp('assuming iSphere is coords')
+       tmp = struct() ;
+       tmp.coords = iSphere .* 1 ;
+       iSphere = tmp ;
+   else
+       error('need sphere with field "coords" for this func to work')
+   end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
