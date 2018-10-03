@@ -57,7 +57,7 @@ quick_plot_surf(lh_sphere_faces,lh_sphere_verts,rotParc,cmap)
 %% figure out which labs are in black, and need to be repositioned
 
 % function [ labelsToReSeed ] = eval_medial_space(origMask,rotVals,spaceVal)
-fillVals = eval_medial_space(blackHoleMask,rotParc,1) ;
+fillVals = eval_medial_space(blackHoleMask,rotParc,1,'spearman') ;
 
 %% make new annot with rotated black hole filled
 
@@ -73,6 +73,10 @@ fVals4BlackHole = kfill_space(fillVals,newBlackHoleCoors) ;
 
 % write into newParc var
 newParc = rotParc .* 1 ;
+
+% all fill vals we 'pop' because they'll be moved to new place
+newParc(logical(sum(bsxfun(@eq,newParc,fillVals'),2))) = blackHoleVal ;
+
 % now put the new labs into the parc
 newParc(logical(newBlackHoleInd)) = fVals4BlackHole ;
 newParc = newParc .* ~blackHoleMask ;

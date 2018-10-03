@@ -33,7 +33,7 @@ if ~exist('iMask','var') || isempty(iMask)
 end
 
 if ~exist('iThetas','var') || isempty(ithetas) 
-   thetas = randi([30, 150],1,3); % The range of rotations
+   thetas = randi([-90, 90],1,3); % The range of rotations
 else
    thetas = ithetas ; 
 end
