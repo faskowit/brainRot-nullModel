@@ -101,7 +101,6 @@ bin/
 /data/raw
 
 # exclude external models from source control
-/src/external/
 scratch/*
 *mat
 *m~
