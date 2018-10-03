@@ -1,4 +1,4 @@
-nulloverlaps
+brainRot-nullModel
 ==============================
 
 A method to get null parcellations on the FreeSurfer surface. This is achieved by projecting the parcellation to a sphere, and randomly rotating in the sphere space. Additionally, the 'black hole' created by the corpus callosum and subcortical structures is filled with labels that were rotated into the actual 'black hole' area<sup>1</sup>. 
