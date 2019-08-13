@@ -107,3 +107,4 @@ scratch/*
 data/doc/
 *png
 test/
+local_ish/
