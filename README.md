@@ -17,7 +17,7 @@ This sphere is then rotated randomly in the x, y, and z direction:
 
 However, after this rotation, we have moved the medial wall (i.e. thie white space) away from its original position (in grey here)... we need to make this original area black again, and we need to fill the area that used to be this black hole. 
 
-![fig2p5](./data/brainRot_2p5.png)
+![fig2p5](./data/brainRot_1p5.png)
 
 And finally we put the original 'white space' back and fill the rotated 'white space' with labels rotated too far into the original invalid space:
 
