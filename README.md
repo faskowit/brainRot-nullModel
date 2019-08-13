@@ -1,7 +1,7 @@
 brainRot-nullModel
 ==============================
 
-A method to get null parcellations on the FreeSurfer surface. This is achieved by projecting the parcellation to a sphere, and randomly rotating in the sphere space. Additionally, the 'black hole' created by the corpus callosum and subcortical structures is filled with labels that were rotated into the actual 'black hole' area<sup>1</sup>. 
+A method to get null parcellations on the FreeSurfer surface. This is achieved by projecting the parcellation to a sphere, and randomly rotating in the sphere space. Additionally, the 'black hole' created by the corpus callosum and subcortical structures (which we made white in the pictures below for easier viewing) is filled with labels that were rotated into the actual 'black hole' area<sup>1</sup>. 
 
 The spherical rotation is adapted from Salim Arslan's [parcel evaluation](https://github.com/sarslancs/parcellation-survey-eval) code. A related project is the [spin-test](https://github.com/spin-test/spin-test) repo. 
 
@@ -15,7 +15,11 @@ This sphere is then rotated randomly in the x, y, and z direction:
 
 ![fig2](./data/brainRot_1.png)
 
-And finally we put the original 'black hole' back and fill the rotated 'black hole' with labels rotated too far into the original invalid space:
+However, after this rotation, we have moved the medial wall (i.e. thie white space) away from its original position (in grey here)... we need to make this original area black again, and we need to fill the area that used to be this black hole. 
+
+![fig2p5](./data/brainRot_2p5.png)
+
+And finally we put the original 'white space' back and fill the rotated 'white space' with labels rotated too far into the original invalid space:
 
 ![fig3](./data/brainRot_2.png)
 
