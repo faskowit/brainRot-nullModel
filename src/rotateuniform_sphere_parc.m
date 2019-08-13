@@ -1,4 +1,4 @@
-function [ rotatedParc , rotatedMask, knnIDX] = rotate_sphere_parc( iParcels, iSphere , iMask, ithetas)
+function [ rotatedParc , rotatedMask, knnIDX] = rotateuniform_sphere_parc( iParcels, iSphere , iMask)
 %GENERATE_NULL_MODEL Generate a null model (parcellations).
 %
 %   INPUT
@@ -6,11 +6,10 @@ function [ rotatedParc , rotatedMask, knnIDX] = rotate_sphere_parc( iParcels, iS
 %   iParcels: A parcellation; label data from annotation file
 %   iSphere: A spherical surface model, with sphere.coors field
 %   iMask: (optional): mask that will rotate same way
-%   ithetas: (optional): input roation angles [ xDeg yDeg zDeg ]
 %
 %   OUTPUT
 %   ======
-%   rotatedParc: a randomly rotated parcellation
+%   rotatedParc: A randomly rotated parcellation
 %   rotatedMask: the mask rotated in same way
 %   knnIDX:      the new indices for the rotation
 %
@@ -27,16 +26,16 @@ function [ rotatedParc , rotatedMask, knnIDX] = rotate_sphere_parc( iParcels, iS
 %   Author: Salim Arslan, April 2017 (name.surname@imperial.ac.uk)
 %
 % j faskowitz edit
+%
+% UNIFORM rotation update from Alexander-Bloch & Siyuan Liu
+%   https://github.com/spin-test/spin-test
+%   using a different way to apply rotation that is unbiased in direction
+%   sampled
+%
 
 if ~exist('iMask','var') || isempty(iMask)
    iMask = [] ;
    rotatedMask = [] ;
-end
-
-if ~exist('iThetas','var') || isempty(ithetas) 
-   thetas = randi([-90, 90],1,3); % The range of rotations
-else
-   thetas = ithetas ; 
 end
 
 if ~isfield(iSphere,'coords')
@@ -52,16 +51,22 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-r_x = rotx(thetas(1)) ;
-r_y = roty(thetas(2)) ;
-r_z = rotz(thetas(3)) ;
+ 
+% uniform sampling update
+% code from https://github.com/spin-test/spin-test/blob/master/scripts/SpinPermuFS.m#L64
+A = normrnd(0,1,3,3);
+[rot, temp] = qr(A);
+rot = rot * diag(sign(diag(temp)));
+if(det(rot)<0)
+    rot(:,1) = -rot(:,1);
+end 
+    
+% r_x = rotx(thetas(1)) ;
+% r_y = roty(thetas(2)) ;
+% r_z = rotz(thetas(3)) ;
 
 % rotated coords
-rotatedCoords = ( iSphere.coords * ...
-                r_x(1:3,1:3) * ...
-                r_y(1:3,1:3) * ...
-                r_z(1:3,1:3) ) ;
+rotatedCoords = ( iSphere.coords * rot ) ;
 % IDX = KNNSEARCH(X,Y)
 % Each row in IDX contains the index of the nearest neighbor in X for the 
 % corresponding row in Y.

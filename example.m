@@ -1,6 +1,7 @@
 %% clear stuff
 clc
 clearvars
+close all
 
 %% setup path
 
@@ -31,60 +32,54 @@ for idx = 1:size(annotTable.table,1)
 end
 
 cmap = annotTable.table(:,1:3) ./ 255 ;
+% lets make it a little bit more readable
+cmap(1,:) = [ 1 1 1 ]; 
 
-%% get the 'black hole', created by subcortical and callosal structures
+%% get the medial wall, i.e. the 'black hole', created by subcortical and 
+% callosal structures
 
 % this is the value it will be in 'labels' var
-blackHoleVal = 1 ;
+medialWallVal = 1 ;
 
 % get the 'black hole' area
-blackHoleMask = (labels == blackHoleVal) ; 
+medialWallMask = (labels == medialWallVal) ; 
 
 %% viz before
+% this is the original parcellation, we haven't done anything to it yet
 
 figure
 quick_plot_surf(lh_sphere_faces,lh_sphere_verts,labels,cmap)
 
-%% rotate
+%% rotate the parcellation
 
-% function [ rotatedParc , rotatedMask] = rotate_sphere_parc( iParcels, iSphere , iMask, ithetas)
-rotParc = rotate_sphere_parc(labels,lh_sphere_verts,blackHoleMask) ;
+rng(4242)
+
+% function [ rotatedParc , rotatedMask] = rotate_sphere_parc( iParcels, iSphere , iMask)
+rotParc = rotateuniform_sphere_parc(labels,lh_sphere_verts,medialWallMask) ;
 
 % and viz
 figure
 quick_plot_surf(lh_sphere_faces,lh_sphere_verts,rotParc,cmap)
 
-%% figure out which labs are in black, and need to be repositioned
+%% visualize the area we need to cut out
 
-% function [ labelsToReSeed ] = eval_medial_space(origMask,rotVals,spaceVal)
-fillVals = eval_medial_space(blackHoleMask,rotParc,1,'spearman') ;
+tmp = medialWallMask .* (ones(length(medialWallMask),1) .* max(rotParc+1));
+needToCutout = (rotParc .* ~medialWallMask) + tmp ;
+
+% and viz
+figure
+quick_plot_surf(lh_sphere_faces,lh_sphere_verts,needToCutout,[ cmap ; 0.75 0.75 0.75 ])
+
+%% figure out which labs are in medial wall, and need to be repositioned
+
+% function labelsToReSeed = eval_medial_space(origMask,rotVals,spaceVal)
+fillVals = eval_medial_space(medialWallMask,rotParc,medialWallVal,'chebychev') ;
 
 %% make new annot with rotated black hole filled
 
-newBlackHoleInd = rotParc == blackHoleVal ;
-% get only new blackHole outside of old black hole
-%  by multipling by old backHole converse
-newBlackHoleInd = newBlackHoleInd .* ~blackHoleMask ;
+% function newParc = get_null_parc_wFilled(origParc,rotParc,medialWallVal,fillVals,surfCoords)
+newParc = get_null_parc_wFilled(labels,rotParc,medialWallVal,fillVals,lh_sphere_verts) ;
 
-newBlackHoleCoors = lh_sphere_verts(logical(newBlackHoleInd),:) ;
-
-% function [ filledVals ] = kfill_space(fillVals,toFillCoords,initPrcnt) 
-fVals4BlackHole = kfill_space(fillVals,newBlackHoleCoors) ;
-
-% write into newParc var
-newParc = rotParc .* 1 ;
-
-% all fill vals we 'pop' because they'll be moved to new place
-newParc(logical(sum(bsxfun(@eq,newParc,fillVals'),2))) = blackHoleVal ;
-
-% now put the new labs into the parc
-newParc(logical(newBlackHoleInd)) = fVals4BlackHole ;
-newParc = newParc .* ~blackHoleMask ;
-
-%% viz new rotated parc
-
+% viz new rotated parc
 figure
 quick_plot_surf(lh_sphere_faces,lh_sphere_verts,newParc,cmap)
-
-
-
