@@ -1,4 +1,4 @@
-function [ rotatedParc , rotatedMask, knnIDX] = rotateuniform_sphere_parc( iParcels, iSphere , iMask)
+function [ rotatedParc , rotatedMask, knnIDX] = rotateuniform_sphere_parc( iParcels, iSphere , iMask, rotMat)
 %GENERATE_NULL_MODEL Generate a null model (parcellations).
 %
 %   INPUT
@@ -40,7 +40,7 @@ end
 
 if ~isfield(iSphere,'coords')
    if size(iSphere,2) == 3
-       disp('assuming iSphere is coords')
+       % disp('assuming iSphere is coords')
        tmp = struct() ;
        tmp.coords = iSphere .* 1 ;
        iSphere = tmp ;
@@ -52,18 +52,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
-% uniform sampling update
-% code from https://github.com/spin-test/spin-test/blob/master/scripts/SpinPermuFS.m#L64
-A = normrnd(0,1,3,3);
-[rot, temp] = qr(A);
-rot = rot * diag(sign(diag(temp)));
-if(det(rot)<0)
-    rot(:,1) = -rot(:,1);
-end 
-    
-% r_x = rotx(thetas(1)) ;
-% r_y = roty(thetas(2)) ;
-% r_z = rotz(thetas(3)) ;
+if nargin < 4
+    % uniform sampling update
+    % code from https://github.com/spin-test/spin-test/blob/master/scripts/SpinPermuFS.m#L64
+    A = normrnd(0,1,3,3);
+    [rot, temp] = qr(A);
+    rot = rot * diag(sign(diag(temp)));
+    if(det(rot)<0)
+        rot(:,1) = -rot(:,1);
+    end   
+else
+   % disp('using provided rotation')
+   rot = rotMat ; 
+end
 
 % rotated coords
 rotatedCoords = ( iSphere.coords * rot ) ;
